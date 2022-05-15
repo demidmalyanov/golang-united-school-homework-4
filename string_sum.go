@@ -31,14 +31,15 @@ func StringSum(input string) (output string, err error) {
 
 	if strings.Count(input, "+") == 1 {
 		numbers = strings.Split(input, "+")
-	} else if strings.Count(input, "-") > 1 {
-		numbers = strings.Split(input, "-")
-
-		q = -1
 	} else if strings.Count(input, "-") == 1 {
 		symbol := "-"
 		numbers = strings.Split(input, "-")
 		numbers[1] = symbol + numbers[1]
+	} else if strings.Count(input, "-") > 1 {
+		str := strings.ReplaceAll(input[1:], "-", "+")
+		numbers = strings.Split(str, "+")
+		q = -1
+
 	}
 
 	sum := 0
