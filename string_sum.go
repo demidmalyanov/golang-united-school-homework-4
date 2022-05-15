@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 )
 
 //use these errors as appropriate, wrapping them with fmt.Errorf function
@@ -13,61 +12,89 @@ var (
 	errorEmptyInput = errors.New("input is empty")
 	// Use when the expression has number of operands not equal to two
 	errorNotTwoOperands = errors.New("expecting two operands, but received more or less")
+	errorInvalidOperand = errors.New("invalid operand, cannot parse no more")
 )
 
-func StringSum(input string) (output string, err error) {
+// Implement a function that computes the sum of two int numbers written as a string
+// For example, having an input string "3+5", it should return output string "8" and nil error
+// Consider cases, when operands are negative ("-3+5" or "-3-5") and when input string contains whitespace (" 3 + 5 ")
+//
+//For the cases, when the input expression is not valid(contains characters, that are not numbers, +, - or whitespace)
+// the function should return an empty string and an appropriate error from strconv package wrapped into your own error
+// with fmt.Errorf function
+//
+// Use the errors defined above as described, again wrapping into fmt.Errorf
 
+func getOperands(input string) ([]string, error) {
+	result := make([]string, 0, 2)
+	operand := []rune{'+'}
+	for _, r := range input + " " {
+		switch len(operand) {
+		case 0:
+			switch r {
+			case ' ':
+				continue
+			case '+', '-':
+				operand = append(operand, r)
+				continue
+			default:
+				return []string{}, fmt.Errorf("%q : %w", r, errorInvalidOperand)
+			}
+		case 1:
+			switch r {
+			case ' ':
+				continue
+			case '+', '-':
+				operand[0] = r
+				continue
+			default:
+				operand = append(operand, r)
+			}
+		default:
+			switch r {
+			case ' ':
+				result = append(result, string(operand))
+				operand = []rune{}
+				continue
+			case '+', '-':
+				result = append(result, string(operand))
+				operand = []rune{r}
+				continue
+			default:
+				operand = append(operand, r)
+			}
+		}
+	}
+
+	return result, nil
+}
+
+func StringSum(input string) (string, error) {
 	if len(input) == 0 {
 		return "", fmt.Errorf("%w", errorEmptyInput)
 	}
 
-	if countOperands(input) > 2 || countOperands(input) == 0 {
+	operands, err := getOperands(input)
+	if len(operands) != 2 {
 		return "", fmt.Errorf("%w", errorNotTwoOperands)
 	}
-	input = stringToFormat(input)
 
-	numbers := make([]string, 0)
-	q := 1
-
-	if strings.Count(input, "+") == 1 {
-		numbers = strings.Split(input, "+")
-	} else if strings.Count(input, "-") == 1 {
-		symbol := "-"
-		numbers = strings.Split(input, "-")
-		numbers[1] = symbol + numbers[1]
-	} else if strings.Count(input, "-") > 1 {
-		str := strings.ReplaceAll(input[1:], "-", "+")
-		numbers = strings.Split(str, "+")
-		q = -1
-
-	}
-
-	sum := 0
-	for _, number := range numbers {
-		num := strings.ReplaceAll(number, " ", "")
-
-		item, err := strconv.Atoi(num)
-		if err != nil {
-			return "", fmt.Errorf("Invalid format or less arguments: %w", err)
+	var result, num = 0, 0
+	for _, operand := range operands {
+		if num, err = idiots_written_tests(operand); err != nil {
+			return "", fmt.Errorf("failed to convert %q: %w", operand, err)
 		}
-		sum += item
+
+		result += num
 	}
 
-	return strconv.Itoa(sum * q), nil
-
+	return strconv.Itoa(result), nil
 }
 
-func stringToFormat(str string) string {
-	strWithoutSpaces := strings.ReplaceAll(str, " ", "")
-	if strings.HasPrefix(strWithoutSpaces, "+") {
-		strWithoutSpaces = strWithoutSpaces[1:]
+func idiots_written_tests(operand string) (int, error) {
+	if operand[0] == '-' {
+		return strconv.Atoi(operand)
 	}
-	return strWithoutSpaces
-}
 
-func countOperands(str string) int {
-	var count = 0
-	count += strings.Count(str, "+")
-	count += strings.Count(str, "-")
-	return count
+	return strconv.Atoi(operand[1:])
 }
