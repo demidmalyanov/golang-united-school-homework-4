@@ -29,16 +29,13 @@ func StringSum(input string) (output string, err error) {
 	numbers := make([]string, 0)
 	q := 1
 
-	if strings.Count(input, "+") >= 1 {
+	if strings.Count(input, "+") == 1 {
 		numbers = strings.Split(input, "+")
-	}
-	if strings.Count(input, "-") > 1 {
+	} else if strings.Count(input, "-") > 1 {
 		numbers = strings.Split(input, "-")
 
 		q = -1
-	}
-
-	if strings.Count(input, "-") == 1 {
+	} else if strings.Count(input, "-") == 1 {
 		symbol := "-"
 		numbers = strings.Split(input, "-")
 		numbers[1] = symbol + numbers[1]
