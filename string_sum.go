@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 //use these errors as appropriate, wrapping them with fmt.Errorf function
@@ -12,7 +13,7 @@ var (
 	errorEmptyInput = errors.New("input is empty")
 	// Use when the expression has number of operands not equal to two
 	errorNotTwoOperands = errors.New("expecting two operands, but received more or less")
-	errorInvalidOperand = errors.New("invalid operand, cannot parse no more")
+	errorWrongFormat    = errors.New("wrong format input string.")
 )
 
 // Implement a function that computes the sum of two int numbers written as a string
@@ -25,76 +26,56 @@ var (
 //
 // Use the errors defined above as described, again wrapping into fmt.Errorf
 
-func getOperands(input string) ([]string, error) {
-	result := make([]string, 0, 2)
-	operand := []rune{'+'}
-	for _, r := range input + " " {
-		switch len(operand) {
-		case 0:
-			switch r {
-			case ' ':
-				continue
-			case '+', '-':
-				operand = append(operand, r)
-				continue
-			default:
-				return []string{}, fmt.Errorf("%q : %w", r, errorInvalidOperand)
+func extractSymbolsFromNums(input string) (symbols, numbers []rune, err error) {
+
+	for i, char := range input {
+
+		switch char {
+		case '+', '-':
+			if input[i] == '+' && input[i+1] == '+' {
+				return symbols, numbers, fmt.Errorf("%w", errorWrongFormat)
+			} else if input[i] == '-' && input[i+1] == '-' {
+				return symbols, numbers, fmt.Errorf("%w", errorWrongFormat)
 			}
-		case 1:
-			switch r {
-			case ' ':
-				continue
-			case '+', '-':
-				operand[0] = r
-				continue
-			default:
-				operand = append(operand, r)
-			}
+			symbols = append(symbols, char)
 		default:
-			switch r {
-			case ' ':
-				result = append(result, string(operand))
-				operand = []rune{}
-				continue
-			case '+', '-':
-				result = append(result, string(operand))
-				operand = []rune{r}
-				continue
-			default:
-				operand = append(operand, r)
-			}
+			numbers = append(numbers, char)
+
 		}
+
 	}
 
-	return result, nil
+	return symbols, numbers, nil
 }
 
-func StringSum(input string) (string, error) {
+func StringSum(input string) (output string, err error) {
+
 	if len(input) == 0 {
 		return "", fmt.Errorf("%w", errorEmptyInput)
 	}
 
-	operands, err := getOperands(input)
-	if len(operands) != 2 {
-		return "", fmt.Errorf("%w", errorNotTwoOperands)
+	input = strings.ReplaceAll(input, " ", "")
+
+	symbols, numbers, err := extractSymbolsFromNums(input)
+
+	if err != nil {
+		return "", fmt.Errorf("%w", err)
 	}
 
-	var result, num = 0, 0
-	for _, operand := range operands {
-		if num, err = idiots_written_tests(operand); err != nil {
-			return "", fmt.Errorf("failed to convert %q: %w", operand, err)
+	if len(symbols)!= 2{
+		return "",fmt.Errorf("%w",errorNotTwoOperands)
+	}
+
+	total := 0
+
+	for i, symbol := range symbols {
+		num, err := strconv.Atoi(string(symbol) + string(numbers[i]))
+		if err != nil {
+			return "",fmt.Errorf("%w",errorWrongFormat)
 		}
+		total += num
 
-		result += num
 	}
 
-	return strconv.Itoa(result), nil
-}
-
-func idiots_written_tests(operand string) (int, error) {
-	if operand[0] == '-' {
-		return strconv.Atoi(operand)
-	}
-
-	return strconv.Atoi(operand[1:])
+	return strconv.Itoa(total), nil
 }
