@@ -7,7 +7,6 @@ import (
 	"strings"
 )
 
-//use these errors as appropriate, wrapping them with fmt.Errorf function
 var (
 	// Use when the input is empty, and input is considered empty if the string contains only whitespace
 	errorEmptyInput = errors.New("input is empty")
@@ -26,28 +25,30 @@ var (
 //
 // Use the errors defined above as described, again wrapping into fmt.Errorf
 
-func extractSymbolsFromNums(input string) (symbols, numbers []rune, err error) {
+func extractSymbolsFromNums(input string) (symbols []rune, output string, err error) {
 
 	for i, char := range input {
 
 		switch char {
 		case '+', '-':
 			if input[i] == '+' && input[i+1] == '+' {
-				return symbols, numbers, fmt.Errorf("%w", errorWrongFormat)
+				return symbols, output, fmt.Errorf("%w", errorWrongFormat)
 			} else if input[i] == '-' && input[i+1] == '-' {
-				return symbols, numbers, fmt.Errorf("%w", errorWrongFormat)
+				return symbols, output, fmt.Errorf("%w", errorWrongFormat)
 			}
 			symbols = append(symbols, char)
+			input = strings.Replace(input, string(input[i]), "*", 1)
 		default:
-			numbers = append(numbers, char)
+			continue
 
 		}
 
 	}
 
-	return symbols, numbers, nil
-}
+	output = input
 
+	return symbols, output, nil
+}
 func StringSum(input string) (output string, err error) {
 
 	if len(input) == 0 {
@@ -56,22 +57,34 @@ func StringSum(input string) (output string, err error) {
 
 	input = strings.ReplaceAll(input, " ", "")
 
-	symbols, numbers, err := extractSymbolsFromNums(input)
+	symbols, str, err := extractSymbolsFromNums(input)
 
 	if err != nil {
 		return "", fmt.Errorf("%w", err)
 	}
 
-	if len(numbers)!= 2{
-		return "",fmt.Errorf("%w",errorNotTwoOperands)
+	if strings.HasPrefix(str, "*") {
+		str = strings.Replace(str, "*", "", 1)
+	}
+	numbers := strings.Split(str, "*")
+
+	if len(numbers) != 2 {
+		return "", fmt.Errorf("%w", errorNotTwoOperands)
+	}
+
+	// then we should reverse our expression ("5-60" = "-60 + 5")
+	if len(symbols) < 2 {
+		symbol := symbols[0]
+		symbols[0] = '+'
+		symbols = append(symbols, symbol)
 	}
 
 	total := 0
 
 	for i, symbol := range symbols {
-		num, err := strconv.Atoi(string(symbol) + string(numbers[i]))
+		num, err := strconv.Atoi(string(symbol) + numbers[i])
 		if err != nil {
-			return "",fmt.Errorf("%w",errorWrongFormat)
+			return "", fmt.Errorf("%w", err)
 		}
 		total += num
 
