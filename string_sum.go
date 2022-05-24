@@ -62,7 +62,7 @@ func StringSum(input string) (output string, err error) {
 		return "", fmt.Errorf("%w", err)
 	}
 
-	if len(symbols)!= 2{
+	if len(numbers)!= 2{
 		return "",fmt.Errorf("%w",errorNotTwoOperands)
 	}
 
